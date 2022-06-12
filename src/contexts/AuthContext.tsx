@@ -1,6 +1,7 @@
 import { createContext, ReactNode, useState } from "react";
-import { api } from "../services/api";
 import { useRouter } from "next/router";
+import { setCookie } from "nookies";
+import { api } from "../services/api";
 
 type User = {
   email: string;
@@ -36,6 +37,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const response = await api.post("sessions", { email, password });
 
       const { token, refreshToken, permissions, roles } = response.data;
+
+      //sempre que estiver tentando lidar com cookies (destruir, editar ou criar) do lado do browser
+      //o primeiro parametro deve ser undefined
+      setCookie(undefined, "nextauth.token", token, {
+        maxAge: 60 * 60 * 24 * 30, //quanto tempo fica salvo no browser (no caso 30 dias)
+        path: "/", //qualquer endereco do app tem acesso ao cookie
+      });
+      setCookie(undefined, "nextauth.refreshToken", refreshToken, {
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/",
+      });
 
       setUser({ email, permissions, roles });
       router.push("/dashboard");
